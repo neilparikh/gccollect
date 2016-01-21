@@ -1,3 +1,11 @@
 # GCcollect
 
-A garbage collect in/for C. See gccollect.h for the API.
+A mark and sweep garbage collecter in/for C. 
+
+## Usage
+On a high level:
+- use GCmalloc and GCfree to allocate and free memory you want garbage collected
+- register all pointers that point to memory allocated using GCmalloc
+- call GCcollect to trigger a garbage collection. This will trigger a GC pause, as the collecter use mark and sweep.
+
+See gccollect.h for the speciifc API.
