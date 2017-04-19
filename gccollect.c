@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 
 // Flags
 // 0 - untouched (ie. should be collected)
@@ -46,6 +47,10 @@ void GCcollect() {
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
     const void* pointer = *(currentPointer->p);
+    if (!pointer) {
+      currentPointer = currentPointer->next;
+      continue;
+    }
     const void* memory_loc = pointer - sizeof(short);
     const short flag = *((short *) memory_loc);
     if (flag == 2) {
@@ -81,11 +86,30 @@ void GCcollect() {
 }
 
 void GCfree(void* ptr) {
-  free(ptr - sizeof(short));
+  /* realloc is used here instead of free, because there's a pointer to this
+   * memory in the memoryList. On the next run of GCcollect, free will be
+   * called on this location, since no pointers point to it anymore.
+   * If free was used here, a "pointer being freed was not allocated" would be
+   * raised, since it's already freed.
+   *
+   * To get around that, we call realloc with 1 instead, so the that free can
+   * be called on it again. However, realloc is not guaranteed to return the
+   * same address if the new size is smaller. If it returns a different
+   * address, we'll just the "pointer being freed was not allocated" error
+   * again.
+   *
+   * For now, we just assert that the new pointer is the same as the old one,
+   * until I come up with a better solution :)
+   */
+  void *ptrToFree = ptr - sizeof(short);
+  void *newPtr = realloc(ptrToFree, 1);
+  assert(newPtr == ptrToFree);
+
+  // Set all pointers that point to this location to NULL
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
-    if (currentPointer->p == ptr) {
-      currentPointer->p = NULL;
+    if (*(currentPointer->p) == ptr) {
+      *(currentPointer->p) = NULL;
     }
     currentPointer = currentPointer->next;
   }
