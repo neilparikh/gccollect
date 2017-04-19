@@ -34,8 +34,9 @@ void registerMemory(void* m) {
 
 void* GCmalloc(size_t size) {
   void* newMemory = malloc(sizeof(short) + size);
-  if (newMemory == NULL)
+  if (newMemory == NULL) {
     return NULL;
+  }
   *(short*) newMemory = 0;
   registerMemory(newMemory);
   return (newMemory + sizeof(short));
@@ -44,10 +45,11 @@ void* GCmalloc(size_t size) {
 void GCcollect() {
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
-    if (*((short*) ((*(currentPointer->p)) - sizeof(short))) == 2)
+    if (*((short*) ((*(currentPointer->p)) - sizeof(short))) == 2) {
       (*(currentPointer->p)) = NULL;
-    else
+    } else {
       *((short*) ((*(currentPointer->p)) - sizeof(short))) = 1;
+    }
     currentPointer = currentPointer->next;
   }
  
@@ -78,8 +80,9 @@ void GCfree(void* ptr) {
   free(ptr - sizeof(short));
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
-    if (currentPointer->p == ptr)
+    if (currentPointer->p == ptr) {
       currentPointer->p = NULL;
+    }
     currentPointer = currentPointer->next;
   }
 }
