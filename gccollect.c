@@ -45,10 +45,13 @@ void* GCmalloc(size_t size) {
 void GCcollect() {
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
-    if (*((short*) ((*(currentPointer->p)) - sizeof(short))) == 2) {
+    const void* pointer = *(currentPointer->p);
+    const void* memory_loc = pointer - sizeof(short);
+    const short flag = *((short *) memory_loc);
+    if (flag == 2) {
       (*(currentPointer->p)) = NULL;
     } else {
-      *((short*) ((*(currentPointer->p)) - sizeof(short))) = 1;
+      *((short*) memory_loc) = 1;
     }
     currentPointer = currentPointer->next;
   }
@@ -56,7 +59,8 @@ void GCcollect() {
   struct memoryNode* currentMemory = memoryList;
   struct memoryNode* prevMemory = NULL;
   while (currentMemory != NULL) {
-    if (*((short*)(currentMemory->m)) == 0 || *((short*)(currentMemory->m)) == 2) {
+    short* flag = ((short*)(currentMemory->m));
+    if (*flag == 0 || *flag == 2) {
       // drop this node from list
       free(currentMemory->m);
       if (prevMemory == NULL) {
@@ -70,7 +74,7 @@ void GCcollect() {
       }
     } else {
       prevMemory = currentMemory;
-      *((short*)(currentMemory->m)) = 0;
+      *flag = 0;
       currentMemory = currentMemory->next;
     }
   }
