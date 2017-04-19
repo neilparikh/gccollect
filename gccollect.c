@@ -4,7 +4,7 @@
 // Flags
 // 0 - untouched (ie. should be collected)
 // 1 - is in use
-// 2 - user called free, should be collected
+// 2 - user called GCfreeDeferred, should be collected
 
 struct pointerNode {
   void** p;
@@ -44,23 +44,28 @@ void* GCmalloc(size_t size) {
 }
 
 void GCcollect() {
+  // Go through the pointer list, and update the flag on the pointed to memory
   struct pointerNode* currentPointer = pointerList;
   while (currentPointer != NULL) {
     const void* pointer = *(currentPointer->p);
     if (!pointer) {
+      // pointer doesn't point to anything, skip
       currentPointer = currentPointer->next;
       continue;
     }
     const void* memory_loc = pointer - sizeof(short);
     const short flag = *((short *) memory_loc);
     if (flag == 2) {
+      // User called GCfreeDeferred on this memory, set pointer to NULL
       (*(currentPointer->p)) = NULL;
     } else {
+      // Mark this memory as used
       *((short*) memory_loc) = 1;
     }
     currentPointer = currentPointer->next;
   }
  
+  // go through the memory list and free all memory that has a 0 or 2 flag
   struct memoryNode* currentMemory = memoryList;
   struct memoryNode* prevMemory = NULL;
   while (currentMemory != NULL) {
